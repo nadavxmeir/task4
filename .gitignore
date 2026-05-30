@@ -16,9 +16,8 @@
 appsettings.Development.json
 appsettings.Local.json
 appsettings.*.json
-!appsettings.json
-
-# =========================
+appsettings.json
+ # =========================
 # Frontend / General Web
 # =========================
 
