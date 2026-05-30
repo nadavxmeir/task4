@@ -1,0 +1,40 @@
+# =========================
+# Backend (.NET / Visual Studio)
+# =========================
+
+# Build results (תיקיות קומפילציה שמופיעות אצלך)
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio / Local user settings (הגדרות מקומיות של הסביבה)
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Configuration files (פרטי חיבור רגישים)
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.json
+!appsettings.json
+
+# =========================
+# Frontend / General Web
+# =========================
+
+# (הכנה לעתיד, במקרה ותחליט לעבוד עם npm או סביבות בילד)
+node_modules/
+dist/
+build/
+.env
+
+# =========================
+# OS generated files
+# =========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
