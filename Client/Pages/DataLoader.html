@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="UTF-8" />
+    <title>One-Time Data Loader</title>
+    <link rel="stylesheet" href="../CSS/style.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+    <style>
+      .loader-container {
+        text-align: center;
+        margin-top: 100px;
+        color: white;
+      }
+      .btn-large {
+        font-size: 20px;
+        padding: 15px 30px;
+        background-color: #28a745;
+        cursor: pointer;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        margin-top: 20px;
+      }
+      .btn-large:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loader-container">
+      <h1>חד פעמי - טעינת נתונים ראשונית למסד הנתונים</h1>
+      <p>
+        דף זה נועד לשימוש פעם אחת בלבד על מנת לשאוב את הנתונים מ- steamData.json
+        ולהכניס אותם ל-SQL.
+      </p>
+
+      <button id="loadBtn" class="btn-large">
+        הפעל הגירת נתונים (Populate DB)
+      </button>
+
+      <p id="statusMsg" style="margin-top: 30px; font-size: 18px"></p>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+        $("#loadBtn").click(function () {
+          const btn = $(this);
+          // שינוי תצוגה בזמן הטעינה כדי שהמשתמש לא ילחץ פעמיים
+          btn.prop("disabled", true).text("טוען נתונים לשרת, נא להמתין...");
+          $("#statusMsg").text("");
+
+          // שאיבת הקובץ המקומי
+          ajaxCall(
+            "GET",
+            "../data/steamData.json",
+            "",
+            function (data) {
+              let promises = data.map((g) => {
+                let gameObj = {
+                  name: g.name,
+                  steamUrl: g.steamUrl,
+                  image: g.capsuleImage,
+                  releaseDate: g.releaseDate,
+                  reviewSummary: g.reviewSummary,
+                  price: g.price,
+                  tags: g.tags,
+                  windows: g.windows,
+                  mac: g.mac,
+                  linux: g.linux,
+                };
+
+                return new Promise((resolve) => {
+                  ajaxCall(
+                    "POST",
+                    "/api/games",
+                    JSON.stringify(gameObj),
+                    function (res) {
+                      resolve(res);
+                    },
+                    function (err) {
+                      resolve(err);
+                    },
+                  );
+                });
+              });
+
+              // המתנה לסיום כל הבקשות
+              Promise.allSettled(promises).then(() => {
+                btn.text("הפעולה הושלמה בהצלחה!");
+                $("#statusMsg").html(
+                  "כל המשחקים הוכנסו למסד הנתונים בהצלחה. <br><br> <a href='index.html' style='color:var(--accent-color); text-decoration:underline; font-weight:bold;'>מעבר לחנות (index.html)</a>",
+                );
+              });
+            },
+            function (err) {
+              btn
+                .prop("disabled", false)
+                .text("הפעל הגירת נתונים (Populate DB)");
+              $("#statusMsg").text("שגיאה בקריאת קובץ ה-JSON המקומי.");
+            },
+          );
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,423 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Add / Edit Game Page</title>
+    <link rel="stylesheet" href="../CSS/formStyle.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+  </head>
+  <body>
+    <div class="auth-container">
+      <div id="serverError" class="server-error"></div>
+
+      <div class="form-section active">
+        <div class="auth-header">
+          <h2>Add / Edit Game</h2>
+        </div>
+
+        <div class="form-tip">
+          💡 Tip: entering an already existing game ID or name will autocomplete
+          the game's details and will redirect you to edit mode.
+        </div>
+
+        <div id="modeBanner" class="mode-banner mode-create">
+          ✨ מצב נוכחי: יצירת משחק חדש (Create Mode)
+        </div>
+
+        <form id="newGame" novalidate>
+          <div class="form-group">
+            <label for="gameName">Name</label>
+            <input type="text" id="gameName" required />
+            <div id="err-name" class="field-error-msg">
+              Game name is required.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="steamUrl">Steam URL</label>
+            <input type="url" id="steamUrl" required />
+            <div id="err-steam" class="field-error-msg">
+              Please enter a valid Steam URL starting with http/https.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="image">Image (string - required link)</label>
+            <input type="url" id="image" required />
+            <div id="err-image" class="field-error-msg">
+              Please enter a valid image URL starting with http/https.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="releaseDate">Release Date (YYYY-MM-DD)</label>
+            <input type="text" id="releaseDate" placeholder="2022-02-25" />
+            <div id="err-date" class="field-error-msg" style="display: none">
+              Invalid date or future date. Use YYYY-MM-DD format.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reviewSummary">Review Summary</label>
+            <input type="text" id="reviewSummary" />
+          </div>
+
+          <div class="form-group">
+            <label for="price">Price ($ 0 - 100)</label>
+            <input
+              type="number"
+              id="price"
+              min="0"
+              max="100"
+              step="1"
+              onkeydown="
+                return (
+                  event.key !== '.' &&
+                  event.key !== 'e' &&
+                  event.key !== 'E' &&
+                  event.key !== '+' &&
+                  event.key !== '-'
+                );
+              "
+              required
+            />
+            <div id="err-price" class="field-error-msg">
+              Price must be a number between 0 and 100.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="tagSelect">Add Tag</label>
+            <div>
+              <select id="tagSelect" aria-placeholder="">
+                <option value="">-- Select Tag --</option>
+              </select>
+              <button type="button" onclick="addTag()" class="btn-small">
+                Add Tag
+              </button>
+            </div>
+            <div
+              id="tagsContainer"
+              class="tags-list"
+              style="margin-top: 10px"
+            ></div>
+          </div>
+
+          <div class="form-group checkboxes">
+            <label>Platforms:</label>
+            <label><input type="checkbox" id="win" /> Windows</label>
+            <label><input type="checkbox" id="mac" /> Mac</label>
+            <label><input type="checkbox" id="linux" /> Linux</label>
+          </div>
+
+          <button type="submit" id="subBtn" class="btn">Save Game</button>
+        </form>
+
+        <div class="switch-link">
+          <a href="index.html">Back to Main Page</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      if (!localStorage.getItem("loggedInUser")) {
+        window.location.href = "auth.html";
+      }
+      let availableTags = [];
+      var tagsList = [];
+      var isEditMode = false;
+      var lastAlertedGameId = null;
+
+      var loadedGameId = null;
+      var loadedGameName = null;
+
+      function loadTags() {
+        // קריאה לשרת ללא await, אלא שימוש בפונקציית ההצלחה (Callback)
+        ajaxCall(
+          "GET",
+          "/api/Games/GetAllTags", // ה-ajaxCall שלך כבר מוסיף את הכתובת של השרת לבד
+          "",
+          function (data) {
+            availableTags = data; // שומרים את התגיות שחזרו מהשרת
+            populateTagsList(); // קוראים לפונקציית הציור רק אחרי שהנתונים הגיעו
+          },
+          function (err) {
+            console.error("Error fetching tags: ", err);
+          },
+        );
+      }
+
+      function populateTagsList() {
+        const selectEl = $("#tagSelect");
+        selectEl.empty();
+
+        selectEl.append(
+          '<option value="" disabled selected hidden>Select a tag...</option>',
+        );
+
+        availableTags.forEach((tag) => {
+          selectEl.append(`<option value="${tag}">${tag}</option>`);
+        });
+      }
+
+      $(document).ready(function () {
+        loadTags();
+      });
+
+      function checkAndLoadGame() {
+        const enteredName = $("#gameName").val().trim();
+        if (!enteredName) return;
+
+        ajaxCall(
+          "GET",
+          `/api/Games/getByName?name=${encodeURIComponent(enteredName)}`,
+          "",
+          function (games) {
+            if (
+              games &&
+              games.length > 0 &&
+              games[0].name.toLowerCase() === enteredName.toLowerCase()
+            ) {
+              const existing = games[0];
+              const modeBanner = $("#modeBanner");
+
+              isEditMode = true;
+
+              loadedGameId = existing.id;
+              loadedGameName = existing.name.toLowerCase();
+
+              $("#gameName").val(existing.name);
+              $("#steamUrl").val(existing.steamUrl);
+              $("#image").val(existing.image || existing.capsuleImage);
+
+              if (existing.releaseDate) {
+                // הופכים את המחרוזת מהשרת לאובייקט תאריך אמיתי
+                let d = new Date(existing.releaseDate);
+
+                // מוודאים שהתאריך תקין
+                if (!isNaN(d.getTime())) {
+                  let year = d.getFullYear();
+                  let month = ("0" + (d.getMonth() + 1)).slice(-2);
+                  let day = ("0" + d.getDate()).slice(-2);
+
+                  $("#releaseDate").val(`${year}-${month}-${day}`);
+                } else {
+                  $("#releaseDate").val("");
+                }
+              } else {
+                $("#releaseDate").val("");
+              }
+
+              $("#reviewSummary").val(existing.reviewSummary);
+              $("#price").val(existing.price);
+
+              $("#win").prop("checked", existing.windows);
+              $("#mac").prop("checked", existing.mac);
+              $("#linux").prop("checked", existing.linux);
+
+              tagsList = existing.tags ? [...existing.tags] : [];
+              renderTags();
+
+              modeBanner.removeClass("mode-create").addClass("mode-edit");
+              modeBanner.html(
+                `✏️ מצב נוכחי: עריכת משחק קיים (Edit Mode) - <strong>${existing.name}</strong>`,
+              );
+
+              if (lastAlertedGameId !== existing.id) {
+                alert(
+                  `שים לב: המשחק "${existing.name}" (ID: ${existing.id}) נמצא במערכת.\nהנתונים נטענו והטופס עבר למצב עריכה.`,
+                );
+                lastAlertedGameId = existing.id;
+              }
+            }
+          },
+          function (err) {
+            console.error("Failed to fetch game by name for validation", err);
+          },
+        );
+      }
+      $("#gameName").on("input", function () {
+        if (isEditMode) {
+          const currentName = $("#gameName").val().trim().toLowerCase();
+
+          if (currentName !== loadedGameName) {
+            const activeInput = document.activeElement;
+            const activeValue = $(activeInput).val();
+
+            isEditMode = false;
+            loadedGameId = null;
+            loadedGameName = null;
+            lastAlertedGameId = null;
+
+            $("#newGame")[0].reset();
+            tagsList = [];
+            renderTags();
+
+            if (activeInput && activeInput.id === "gameName") {
+              $(activeInput).val(activeValue);
+            }
+
+            const modeBanner = $("#modeBanner");
+            modeBanner.removeClass("mode-edit").addClass("mode-create");
+            modeBanner.html("✨ מצב נוכחי: יצירת משחק חדש (Create Mode)");
+          }
+        }
+      });
+
+      $("#gameName").on("blur", checkAndLoadGame);
+
+      function addTag() {
+        const tagValue = $("#tagSelect").val();
+        if (tagValue && !tagsList.includes(tagValue)) {
+          tagsList.push(tagValue);
+          renderTags();
+        }
+        $("#tagSelect").val("");
+      }
+
+      function removeTag(tagToRemove) {
+        tagsList = tagsList.filter((t) => t !== tagToRemove);
+        renderTags();
+      }
+
+      function renderTags() {
+        const container = $("#tagsContainer").empty();
+        tagsList.forEach((t) => {
+          const tagEl = $(
+            `<span class="tag" style="cursor:pointer;">✕ ${t}</span>`,
+          );
+          tagEl.on("click", function () {
+            removeTag(t);
+          });
+          container.append(tagEl);
+        });
+      }
+
+      $("#newGame").on("submit", function (e) {
+        e.preventDefault();
+
+        $(".input-error").removeClass("input-error");
+        $(".field-error-msg").hide();
+
+        let isValid = true;
+
+        const nameVal = $("#gameName").val().trim();
+        const steamVal = $("#steamUrl").val().trim();
+        const imageVal = $("#image").val().trim();
+        const priceVal = parseInt($("#price").val());
+
+        if (!nameVal) {
+          $("#gameName").addClass("input-error");
+          $("#err-name").show();
+          isValid = false;
+        }
+
+        if (!steamVal || !steamVal.startsWith("http")) {
+          $("#steamUrl").addClass("input-error");
+          $("#err-steam").show();
+          isValid = false;
+        }
+
+        if (!imageVal || !imageVal.startsWith("http")) {
+          $("#image").addClass("input-error");
+          $("#err-image").show();
+          isValid = false;
+        }
+
+        if (isNaN(priceVal) || priceVal < 0 || priceVal > 100) {
+          $("#price").addClass("input-error");
+          $("#err-price").show();
+          isValid = false;
+        }
+
+        const dateVal = $("#releaseDate").val().trim();
+        if (dateVal) {
+          // בדיקה שהפורמט הוא בדיוק 4 ספרות - 2 ספרות - 2 ספרות
+          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+          if (!dateRegex.test(dateVal)) {
+            $("#releaseDate").addClass("input-error");
+            $("#err-date")
+              .text("Please use the correct format: YYYY-MM-DD")
+              .show();
+            isValid = false;
+          } else {
+            // אם הפורמט תקין, בודקים אם זה תאריך אמיתי ושאינו עתידי
+            const selectedDate = new Date(dateVal);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (isNaN(selectedDate.getTime())) {
+              $("#releaseDate").addClass("input-error");
+              $("#err-date").text("Invalid date entered.").show();
+              isValid = false;
+            } else if (selectedDate > today) {
+              $("#releaseDate").addClass("input-error");
+              $("#err-date")
+                .text("Release date cannot be in the future.")
+                .show();
+              isValid = false;
+            }
+          }
+        }
+
+        if (!isValid) return;
+
+        // ולידציה לתאריך טקסטואלי - פורמט YYYY-MM-DD ושלא יהיה עתידי
+
+        const gameObj = {
+          id: loadedGameId ? parseInt(loadedGameId) : 0,
+          name: nameVal,
+          steamUrl: steamVal,
+          image: imageVal,
+          releaseDate: $("#releaseDate").val().trim(),
+          reviewSummary: $("#reviewSummary").val().trim(),
+          price: priceVal,
+          tags: tagsList,
+          windows: $("#win").prop("checked"),
+          mac: $("#mac").prop("checked"),
+          linux: $("#linux").prop("checked"),
+        };
+
+        if (isEditMode) {
+          ajaxCall(
+            "PUT",
+            `/api/games/${gameObj.id}`,
+            JSON.stringify(gameObj),
+            function (res) {
+              alert("✅ " + (res || "Game updated successfully."));
+              window.location.href = "Mygames.html";
+            },
+            function (err) {
+              alert(
+                "❌ Result: Failed! Reason: " +
+                  (err.responseText || "Server error"),
+              );
+            },
+          );
+        } else {
+          ajaxCall(
+            "POST",
+            "/api/games",
+            JSON.stringify(gameObj),
+            function (res) {
+              alert("✅ Result: Success! New game added to your library.");
+              window.location.href = "Mygames.html";
+            },
+            function (err) {
+              if (err.status === 409) {
+                alert("❌ Result: Failed! Game with this name already exists.");
+              } else {
+                alert(
+                  "❌ Result: Failed! Reason: " +
+                    (err.responseText || "Server error"),
+                );
+              }
+            },
+          );
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,560 @@
+﻿:root {
+  --bg-color: #1b2838;
+  --card-bg: #2a475e;
+  --text-color: #c7d5e0;
+  --accent-color: #66c0f4;
+  --danger-color: #a34c4c;
+  --success-color: #4c994c;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  direction: ltr;
+  margin: 0 50px;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--card-bg);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  padding: 50px;
+}
+
+.game-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.2s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.game-card:hover {
+  transform: translateY(-5px);
+}
+
+.game-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.card-content {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-content h3 {
+  margin: 0 0 10px 0;
+  color: white;
+  height: 50px;
+  overflow: hidden;
+}
+
+.meta-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9em;
+  margin-bottom: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.tags,
+.platform-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 15px;
+  height: 25px;
+  overflow: hidden;
+}
+
+.tag,
+.platform-tag {
+  background: #2d8945;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 0.75em;
+  color: white;
+}
+
+.btn {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 7px;
+  transition: 0.2s;
+}
+
+.btn-add {
+  background: var(--success-color);
+  color: white;
+}
+
+.btn-add:hover {
+  background: #5cb85c;
+}
+
+.btn-delete {
+  background: var(--danger-color);
+  color: white;
+}
+
+.btn-steam {
+  background: #171a21;
+  color: white;
+  text-decoration: none;
+  text-align: center;
+}
+
+input[type="text"] {
+  width: 300px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--accent-color);
+  background: #171a21;
+  color: white;
+}
+#isEmpty {
+  text-align: center;
+  color: white;
+  margin-top: 150px;
+}
+/* עיצוב תגיות פלטפורמה בדיוק לפי התמונה */
+.platform-tag {
+  background: #808080;
+}
+
+.user-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-btn {
+  background-color: var(--accent-color);
+  padding: 10px 10px;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dropdown-content {
+  display: none; /* מוסתר כברירת מחדל */
+  position: absolute;
+  right: 0;
+  background-color: white;
+  width: 100%;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+/* מחלקה שנוסיף באמצעות JS כדי להציג את התפריט */
+.show {
+  display: block;
+}
+
+.dropdown-content a {
+  color: #dc3545;
+  font-size: 14px;
+  padding: 10px 12px;
+  text-decoration: none;
+  display: block;
+  text-align: right;
+  font-weight: bold;
+}
+
+a {
+  cursor: pointer;
+  color: white;
+}
+.load-btn {
+  margin-top: 50px;
+  padding-right: 50px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.search-bar {
+  margin-bottom: 20px;
+  margin-left: 50px;
+}
+.main-menu {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* המעטפת השחורה והחצי-שקופה שמכסה את כל המסך */
+.modal-overlay {
+  display: none; /* מוסתר כברירת מחדל */
+  position: fixed; /* נשאר במקום גם אם גוללים */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* רקע שחור עם 70% שקיפות */
+  z-index: 1000; /* מוודא שזה מופיע מעל כל שאר האלמנטים בדף */
+
+  /* מירכוז הקופסה לאמצע המסך */
+  justify-content: center;
+  align-items: center;
+}
+
+/* קופסת הפופ-אפ עצמה */
+.modal-content {
+  background-color: var(--card-bg); /* שימוש בצבע הרקע של הכרטיסיות שלך */
+  padding: 30px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  position: relative; /* חשוב כדי שכפתור ה-X ימוקם ביחס לקופסה הזו */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* כפתור הסגירה (X) */
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  color: #aaa;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: white;
+}
+
+/* =========================================
+   עיצוב חכם לסינון התגיות (Filter Bar)
+   ========================================= */
+.filter-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin: 30px auto;
+  padding: 15px 25px;
+  /* גרדיאנט כהה שמתאים לאווירה של Steam */
+  background: linear-gradient(135deg, #1b2838 0%, #2a475e 100%);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  width: fit-content;
+  border: 1px solid #3c5a74;
+  transition: all 0.3s ease;
+}
+
+.filter-container:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+  border-color: #66c0f4;
+}
+
+.filter-label {
+  color: #c7d5e0;
+  font-size: 1.1em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-input {
+  background-color: #16202d;
+  border: 1px solid #323e4c;
+  color: #ffffff;
+  padding: 10px 15px;
+  border-radius: 8px;
+  width: 280px;
+  font-size: 1em;
+  outline: none;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.filter-input::placeholder {
+  color: #707b86;
+}
+
+/* אפקט זוהר בכחול כשלוחצים על שדה ההקלדה */
+.filter-input:focus {
+  border-color: #66c0f4;
+  box-shadow: 0 0 8px rgba(102, 192, 244, 0.4);
+}
+
+.filter-clear-btn {
+  background-color: transparent;
+  color: #c7d5e0;
+  border: 2px solid #323e4c;
+  padding: 9px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.filter-clear-btn:hover {
+  background-color: #3d4a58;
+  color: #ffffff;
+  border-color: #66c0f4;
+}
+
+/* =========================================
+   עיצוב התפריט הנפתח של המשתמש (User Dropdown)
+   ========================================= */
+.user-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* הכפתור הראשי שפותח את התפריט */
+.dropdown-btn {
+  background-color: #66c0f4; /* הצבע התכלת של Steam */
+  color: #171a21;
+  padding: 10px 18px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-btn:hover {
+  background-color: #41a8e1;
+}
+
+/* החלונית הקופצת (מוסתרת כברירת מחדל) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0; /* מצמיד את התפריט לצד ימין של הכפתור */
+  background-color: #1b2838; /* רקע כהה כמו שאר האתר */
+  min-width: 170px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  border: 1px solid #2a475e;
+  overflow: hidden;
+  z-index: 1000;
+  margin-top: 8px;
+}
+
+/* מחלקה שמוסיף ה-JS כדי להציג את התפריט */
+.dropdown-content.show {
+  display: block;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* איחוד העיצוב של הכפתור והקישור בתוך התפריט */
+.dropdown-content a,
+.dropdown-content button {
+  color: #c7d5e0;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+/* קו הפרדה עדין מתחת לכפתור העריכה */
+.dropdown-content button#editUser {
+  border-bottom: 1px solid #2a475e;
+}
+
+/* אפקט Hover רגיל */
+.dropdown-content a:hover,
+.dropdown-content button:hover {
+  background-color: #2a475e;
+  color: #ffffff;
+}
+
+/* אפקט Hover ייעודי לכפתור התנתקות (אדום אזהרה) */
+.dropdown-content a[onclick="logout()"]:hover {
+  background-color: #ff4d4d;
+  color: white;
+}
+
+/* אנימציית פתיחה קטנה */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* עיצוב בסיסי לטבלה ולכפתור ההחלפה */
+#tableContainer {
+  display: none;
+  padding: 20px;
+  color: black;
+  background: white;
+  border-radius: 10px;
+  margin: 0 50px;
+}
+#gamesTable {
+  color: black;
+}
+.view-toggle {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.price-input {
+  width: 60px;
+  padding: 5px;
+  border-radius: 3px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+.btn-update-price {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-left: 5px;
+}
+.btn-update-price:hover {
+  background: #218838;
+}
+.tag-chip {
+  background-color: #66c0f4;
+  color: #171a21;
+  padding: 6px 14px;
+  border-radius: 15px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.remove-tag {
+  cursor: pointer;
+  color: #171a21;
+  font-weight: bold;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.remove-tag:hover {
+  color: #ff4d4d; /* אדום כשעוברים מעל ה-X */
+}
+/* =========================================
+   עיצוב טופס המודאל (Edit Profile)
+   ========================================= */
+#popupRegisterForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+#popupRegisterForm .form-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  margin-bottom: 0;
+}
+
+#popupRegisterForm label {
+  font-size: 0.95rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #c7d5e0;
+}
+
+#popupRegisterForm input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #323e4c;
+  background-color: #16202d; /* רקע כהה לשדה הטקסט */
+  color: #ffffff;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* אפקט הארה כחולה כשלוחצים על השדה להקלדה */
+#popupRegisterForm input:focus {
+  outline: none;
+  border-color: #66c0f4;
+  box-shadow: 0 0 8px rgba(102, 192, 244, 0.4);
+}
+
+/* עיצוב כפתור השמירה שייראה כמו כפתור מרכזי ב-Steam */
+#popupRegisterForm .btn {
+  width: 100%;
+  background: linear-gradient(to right, #47bfff 0%, #1a44c2 60%);
+  background-position: 25%;
+  background-size: 330% 100%;
+  color: white;
+  padding: 14px;
+  font-size: 1.1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: all 0.3s ease;
+}
+
+#popupRegisterForm .btn:hover {
+  background-position: 100%;
+  box-shadow: 0 0 10px rgba(102, 192, 244, 0.5);
+}
+
+/* תיקון צבע להודעות השגיאה של הולידציה */
+#popupRegisterForm .field-error-msg {
+  color: #ff4d4d !important;
+  font-size: 13px !important;
+  margin-top: 6px !important;
+}
